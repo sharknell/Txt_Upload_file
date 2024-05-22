@@ -25,7 +25,6 @@ import {
   useMediaQuery,
 } from "@mui/material";
 import { styled } from "@mui/system";
-import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DownloadIcon from "@mui/icons-material/Download";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -33,9 +32,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Save";
 import { useDropzone } from "react-dropzone";
 
-const Input = styled("input")({
-  display: "none",
-});
+
 
 const DropzoneContainer = styled(Box)(({ theme }) => ({
   border: "2px dashed #cccccc",
