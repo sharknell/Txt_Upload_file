@@ -24,32 +24,12 @@ import {
   ThemeProvider,
   useMediaQuery,
 } from "@mui/material";
-import { styled } from "@mui/system";
 import DownloadIcon from "@mui/icons-material/Download";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Save";
-import { useDropzone } from "react-dropzone";
-
-const DropzoneContainer = styled(Box)(({ theme }) => ({
-  border: "2px dashed #cccccc",
-  padding: theme.spacing(4),
-  textAlign: "center",
-  cursor: "pointer",
-  backgroundColor: theme.palette.background.default,
-  "&:hover": {
-    backgroundColor: theme.palette.action.hover,
-  },
-}));
-
-const Preformatted = styled("pre")(({ theme }) => ({
-  whiteSpace: "pre-wrap",
-  wordBreak: "break-word",
-  margin: 0,
-  backgroundColor: theme.palette.background.default,
-  color: theme.palette.text.primary,
-}));
+import DropzoneArea from "./DropzoneArea"; // DropzoneArea 컴포넌트를 분할합니다.
 
 const getFileNameWithoutExtension = (filename) => {
   return filename.replace(/\.[^/.]+$/, "");
@@ -121,6 +101,8 @@ const FileUpload = () => {
   };
 
   const downloadCSV = () => {
+    const fileCount = files.length;
+    const mergeName = `Merge (${fileCount})_${getCurrentDateTime().slice(2)}`;
     const csvContent = [
       ["No.", "File Name", "File Content"],
       ...files.map((file, index) => [
@@ -132,13 +114,10 @@ const FileUpload = () => {
         .map((e) => e.map((a) => `"${a}"`).join(","))
         .join("\n");
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob([csvContent], { type: "text/csv" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.setAttribute(
-        "download",
-        `merge ${getCurrentDateTime().replace("_", "_")}.csv`
-    );
+    link.setAttribute("download", `${mergeName}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -146,10 +125,8 @@ const FileUpload = () => {
     handleDownloadComplete();
   };
 
-  const { getRootProps, getInputProps } = useDropzone({
-    onDrop,
-    accept: ".txt",
-  });
+
+
 
   const handleAlertClose = () => {
     setAlertOpen(false);
@@ -206,12 +183,7 @@ const FileUpload = () => {
                 />
               </Toolbar>
             </AppBar>
-            <DropzoneContainer {...getRootProps()}>
-              <input {...getInputProps()} />
-              <Typography variant="body1">
-                파일을 이곳에 드래그 앤 드롭 하거나 클릭하여 업로드하세요.
-              </Typography>
-            </DropzoneContainer>
+            <DropzoneArea onDrop={onDrop} />
             <TextField
                 label="파일 내용 검색"
                 variant="outlined"
@@ -272,7 +244,7 @@ const FileUpload = () => {
                                     }
                                 />
                             ) : (
-                                <Preformatted>{file.content}</Preformatted>
+                                <pre>{file.content}</pre>
                             )}
                           </TableCell>
                           <TableCell>
@@ -316,7 +288,7 @@ const FileUpload = () => {
           >
             <Alert
                 onClose={handleAlertClose}
-                severity="error"
+                severity={alertMessage.includes("완료") ? "success" : "error"}
                 sx={{ width: "100%" }}
             >
               {alertMessage}
