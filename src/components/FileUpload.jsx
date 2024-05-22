@@ -32,8 +32,6 @@ import EditIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Save";
 import { useDropzone } from "react-dropzone";
 
-
-
 const DropzoneContainer = styled(Box)(({ theme }) => ({
   border: "2px dashed #cccccc",
   padding: theme.spacing(4),
@@ -104,18 +102,23 @@ const FileUpload = () => {
     const readFiles = txtFiles.map(handleFileRead);
 
     Promise.all(readFiles)
-      .then((fileContents) => {
-        setFiles((prevFiles) => [...prevFiles, ...fileContents]);
-      })
-      .catch((error) => {
-        console.error("파일 읽기 오류: ", error);
-      });
+        .then((fileContents) => {
+          setFiles((prevFiles) => [...prevFiles, ...fileContents]);
+        })
+        .catch((error) => {
+          console.error("파일 읽기 오류: ", error);
+        });
 
     if (rejectedFiles.length > 0 || txtFiles.length !== acceptedFiles.length) {
       setAlertMessage("TXT 파일만 업로드할 수 있습니다. 다시 시도해주세요.");
       setAlertOpen(true);
     }
   }, []);
+
+  const handleDownloadComplete = () => {
+    setAlertMessage("CSV 다운로드가 완료되었습니다.");
+    setAlertOpen(true);
+  };
 
   const downloadCSV = () => {
     const csvContent = [
@@ -126,19 +129,21 @@ const FileUpload = () => {
         file.content.replace(/"/g, '""'),
       ]),
     ]
-      .map((e) => e.map((a) => `"${a}"`).join(","))
-      .join("\n");
+        .map((e) => e.map((a) => `"${a}"`).join(","))
+        .join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.setAttribute(
-      "download",
-      `merge ${getCurrentDateTime().replace("_", "_")}.csv`
+        "download",
+        `merge ${getCurrentDateTime().replace("_", "_")}.csv`
     );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+
+    handleDownloadComplete();
   };
 
   const { getRootProps, getInputProps } = useDropzone({
@@ -176,149 +181,149 @@ const FileUpload = () => {
   };
 
   const filteredFiles = files.filter((file) =>
-    file.content.toLowerCase().includes(searchQuery.toLowerCase())
+      file.content.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Container maxWidth="md">
-        <Box sx={{ my: 4, textAlign: "center" }}>
-          <AppBar position="static">
-            <Toolbar>
-              <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                TXT 파일 업로드 및 CSV 다운로드
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Container maxWidth="md">
+          <Box sx={{ my: 4, textAlign: "center" }}>
+            <AppBar position="static">
+              <Toolbar>
+                <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                  TXT 파일 업로드 및 CSV 다운로드
+                </Typography>
+                <FormControlLabel
+                    control={
+                      <Switch
+                          checked={darkMode}
+                          onChange={handleThemeChange}
+                          name="themeSwitch"
+                      />
+                    }
+                    label="다크 모드"
+                />
+              </Toolbar>
+            </AppBar>
+            <DropzoneContainer {...getRootProps()}>
+              <input {...getInputProps()} />
+              <Typography variant="body1">
+                파일을 이곳에 드래그 앤 드롭 하거나 클릭하여 업로드하세요.
               </Typography>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={darkMode}
-                    onChange={handleThemeChange}
-                    name="themeSwitch"
-                  />
-                }
-                label="다크 모드"
-              />
-            </Toolbar>
-          </AppBar>
-          <DropzoneContainer {...getRootProps()}>
-            <input {...getInputProps()} />
-            <Typography variant="body1">
-              파일을 이곳에 드래그 앤 드롭 하거나 클릭하여 업로드하세요.
-            </Typography>
-          </DropzoneContainer>
-          <TextField
-            label="파일 내용 검색"
-            variant="outlined"
-            fullWidth
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            sx={{ mt: 2 }}
-          />
-          <Box
-            sx={{ mt: 2, display: "flex", justifyContent: "center", gap: 2 }}
-          >
-            {files.length > 0 && (
-              <>
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  startIcon={<DownloadIcon />}
-                  onClick={downloadCSV}
-                >
-                  CSV 다운로드
-                </Button>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  startIcon={<RefreshIcon />}
-                  onClick={handleRefresh}
-                >
-                  새로 고침
-                </Button>
-              </>
-            )}
+            </DropzoneContainer>
+            <TextField
+                label="파일 내용 검색"
+                variant="outlined"
+                fullWidth
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                sx={{ mt: 2 }}
+            />
+            <Box
+                sx={{ mt: 2, display: "flex", justifyContent: "center", gap: 2 }}
+            >
+              {files.length > 0 && (
+                  <>
+                    <Button
+                        variant="contained"
+                        color="secondary"
+                        startIcon={<DownloadIcon />}
+                        onClick={downloadCSV}
+                    >
+                      CSV 다운로드
+                    </Button>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        startIcon={<RefreshIcon />}
+                        onClick={handleRefresh}
+                    >
+                      새로 고침
+                    </Button>
+                  </>
+              )}
+            </Box>
           </Box>
-        </Box>
-        {filteredFiles.length > 0 && (
-          <TableContainer component={Paper} sx={{ mt: 4 }}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>No.</TableCell>
-                  <TableCell>File Name</TableCell>
-                  <TableCell>File Content</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredFiles.map((file, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>{file.name}</TableCell>
-                    <TableCell>
-                      {editingFileIndex === index ? (
-                        <TextField
-                          fullWidth
-                          multiline
-                          value={editingFileContent}
-                          onChange={(e) =>
-                            setEditingFileContent(e.target.value)
-                          }
-                        />
-                      ) : (
-                        <Preformatted>{file.content}</Preformatted>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {editingFileIndex === index ? (
-                        <IconButton
-                          edge="end"
-                          aria-label="save"
-                          onClick={() => handleSaveEdit(index)}
-                        >
-                          <SaveIcon />
-                        </IconButton>
-                      ) : (
-                        <>
-                          <IconButton
-                            edge="end"
-                            aria-label="edit"
-                            onClick={() => handleEditFile(index)}
-                          >
-                            <EditIcon />
-                          </IconButton>
-                          <IconButton
-                            edge="end"
-                            aria-label="delete"
-                            onClick={() => handleRemoveFile(index)}
-                          >
-                            <DeleteIcon />
-                          </IconButton>
-                        </>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-        <Snackbar
-          open={alertOpen}
-          autoHideDuration={6000}
-          onClose={handleAlertClose}
-        >
-          <Alert
-            onClose={handleAlertClose}
-            severity="error"
-            sx={{ width: "100%" }}
+          {filteredFiles.length > 0 && (
+              <TableContainer component={Paper} sx={{ mt: 4 }}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>No.</TableCell>
+                      <TableCell>File Name</TableCell>
+                      <TableCell>File Content</TableCell>
+                      <TableCell>Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {filteredFiles.map((file, index) => (
+                        <TableRow key={index}>
+                          <TableCell>{index + 1}</TableCell>
+                          <TableCell>{file.name}</TableCell>
+                          <TableCell>
+                            {editingFileIndex === index ? (
+                                <TextField
+                                    fullWidth
+                                    multiline
+                                    value={editingFileContent}
+                                    onChange={(e) =>
+                                        setEditingFileContent(e.target.value)
+                                    }
+                                />
+                            ) : (
+                                <Preformatted>{file.content}</Preformatted>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {editingFileIndex === index ? (
+                                <IconButton
+                                    edge="end"
+                                    aria-label="save"
+                                    onClick={() => handleSaveEdit(index)}
+                                >
+                                  <SaveIcon />
+                                </IconButton>
+                            ) : (
+                                <>
+                                  <IconButton
+                                      edge="end"
+                                      aria-label="edit"
+                                      onClick={() => handleEditFile(index)}
+                                  >
+                                    <EditIcon />
+                                  </IconButton>
+                                  <IconButton
+                                      edge="end"
+                                      aria-label="delete"
+                                      onClick={() => handleRemoveFile(index)}
+                                  >
+                                    <DeleteIcon />
+                                  </IconButton>
+                                </>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+          )}
+          <Snackbar
+              open={alertOpen}
+              autoHideDuration={6000}
+              onClose={handleAlertClose}
           >
-            {alertMessage}
-          </Alert>
-        </Snackbar>
-      </Container>
-    </ThemeProvider>
+            <Alert
+                onClose={handleAlertClose}
+                severity="error"
+                sx={{ width: "100%" }}
+            >
+              {alertMessage}
+            </Alert>
+          </Snackbar>
+        </Container>
+      </ThemeProvider>
   );
 };
 
