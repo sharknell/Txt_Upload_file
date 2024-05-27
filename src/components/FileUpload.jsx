@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Button,
   Table,
@@ -55,6 +55,11 @@ const FileUpload = () => {
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
   const [darkMode, setDarkMode] = useState(prefersDarkMode);
 
+  useEffect(() => {
+    const savedDarkMode = localStorage.getItem("darkMode") === "true";
+    setDarkMode(savedDarkMode);
+  }, []);
+
   const theme = createTheme({
     palette: {
       mode: darkMode ? "dark" : "light",
@@ -82,12 +87,12 @@ const FileUpload = () => {
     const readFiles = txtFiles.map(handleFileRead);
 
     Promise.all(readFiles)
-        .then((fileContents) => {
-          setFiles((prevFiles) => [...prevFiles, ...fileContents]);
-        })
-        .catch((error) => {
-          console.error("파일 읽기 오류: ", error);
-        });
+      .then((fileContents) => {
+        setFiles((prevFiles) => [...prevFiles, ...fileContents]);
+      })
+      .catch((error) => {
+        console.error("파일 읽기 오류: ", error);
+      });
 
     if (rejectedFiles.length > 0 || txtFiles.length !== acceptedFiles.length) {
       setAlertMessage("TXT 파일만 업로드할 수 있습니다. 다시 시도해주세요.");
@@ -111,8 +116,8 @@ const FileUpload = () => {
         file.content.replace(/"/g, '""'),
       ]),
     ]
-        .map((e) => e.map((a) => `"${a}"`).join(","))
-        .join("\n");
+      .map((e) => e.map((a) => `"${a}"`).join(","))
+      .join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv" });
     const link = document.createElement("a");
@@ -124,9 +129,6 @@ const FileUpload = () => {
 
     handleDownloadComplete();
   };
-
-
-
 
   const handleAlertClose = () => {
     setAlertOpen(false);
@@ -155,147 +157,148 @@ const FileUpload = () => {
 
   const handleThemeChange = () => {
     setDarkMode(!darkMode);
+    localStorage.setItem("darkMode", !darkMode);
   };
 
   const filteredFiles = files.filter((file) =>
-      file.content.toLowerCase().includes(searchQuery.toLowerCase())
+    file.content.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Container maxWidth="md">
-          <Box sx={{ my: 4, textAlign: "center" }}>
-            <AppBar position="static">
-              <Toolbar>
-                <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                  TXT 파일 업로드 및 CSV 다운로드
-                </Typography>
-                <FormControlLabel
-                    control={
-                      <Switch
-                          checked={darkMode}
-                          onChange={handleThemeChange}
-                          name="themeSwitch"
-                      />
-                    }
-                    label="다크 모드"
-                />
-              </Toolbar>
-            </AppBar>
-            <DropzoneArea onDrop={onDrop} />
-            <TextField
-                label="파일 내용 검색"
-                variant="outlined"
-                fullWidth
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                sx={{ mt: 2 }}
-            />
-            <Box
-                sx={{ mt: 2, display: "flex", justifyContent: "center", gap: 2 }}
-            >
-              {files.length > 0 && (
-                  <>
-                    <Button
-                        variant="contained"
-                        color="secondary"
-                        startIcon={<DownloadIcon />}
-                        onClick={downloadCSV}
-                    >
-                      CSV 다운로드
-                    </Button>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        startIcon={<RefreshIcon />}
-                        onClick={handleRefresh}
-                    >
-                      새로 고침
-                    </Button>
-                  </>
-              )}
-            </Box>
-          </Box>
-          {filteredFiles.length > 0 && (
-              <TableContainer component={Paper} sx={{ mt: 4 }}>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>No.</TableCell>
-                      <TableCell>File Name</TableCell>
-                      <TableCell>File Content</TableCell>
-                      <TableCell>Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {filteredFiles.map((file, index) => (
-                        <TableRow key={index}>
-                          <TableCell>{index + 1}</TableCell>
-                          <TableCell>{file.name}</TableCell>
-                          <TableCell>
-                            {editingFileIndex === index ? (
-                                <TextField
-                                    fullWidth
-                                    multiline
-                                    value={editingFileContent}
-                                    onChange={(e) =>
-                                        setEditingFileContent(e.target.value)
-                                    }
-                                />
-                            ) : (
-                                <pre>{file.content}</pre>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {editingFileIndex === index ? (
-                                <IconButton
-                                    edge="end"
-                                    aria-label="save"
-                                    onClick={() => handleSaveEdit(index)}
-                                >
-                                  <SaveIcon />
-                                </IconButton>
-                            ) : (
-                                <>
-                                  <IconButton
-                                      edge="end"
-                                      aria-label="edit"
-                                      onClick={() => handleEditFile(index)}
-                                  >
-                                    <EditIcon />
-                                  </IconButton>
-                                  <IconButton
-                                      edge="end"
-                                      aria-label="delete"
-                                      onClick={() => handleRemoveFile(index)}
-                                  >
-                                    <DeleteIcon />
-                                  </IconButton>
-                                </>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-          )}
-          <Snackbar
-              open={alertOpen}
-              autoHideDuration={6000}
-              onClose={handleAlertClose}
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Container maxWidth="md">
+        <Box sx={{ my: 4, textAlign: "center" }}>
+          <AppBar position="static">
+            <Toolbar>
+              <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                TXT 파일 업로드 및 CSV 다운로드
+              </Typography>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={darkMode}
+                    onChange={handleThemeChange}
+                    name="themeSwitch"
+                  />
+                }
+                label="Dark Mode"
+              />
+            </Toolbar>
+          </AppBar>
+          <DropzoneArea onDrop={onDrop} />
+          <TextField
+            label="파일 내용 검색"
+            variant="outlined"
+            fullWidth
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            sx={{ mt: 2 }}
+          />
+          <Box
+            sx={{ mt: 2, display: "flex", justifyContent: "center", gap: 2 }}
           >
-            <Alert
-                onClose={handleAlertClose}
-                severity={alertMessage.includes("완료") ? "success" : "error"}
-                sx={{ width: "100%" }}
-            >
-              {alertMessage}
-            </Alert>
-          </Snackbar>
-        </Container>
-      </ThemeProvider>
+            {files.length > 0 && (
+              <>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  startIcon={<DownloadIcon />}
+                  onClick={downloadCSV}
+                >
+                  CSV 다운로드
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<RefreshIcon />}
+                  onClick={handleRefresh}
+                >
+                  새로 고침
+                </Button>
+              </>
+            )}
+          </Box>
+        </Box>
+        {filteredFiles.length > 0 && (
+          <TableContainer component={Paper} sx={{ mt: 4 }}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>No.</TableCell>
+                  <TableCell>File Name</TableCell>
+                  <TableCell>File Content</TableCell>
+                  <TableCell>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredFiles.map((file, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>{file.name}</TableCell>
+                    <TableCell>
+                      {editingFileIndex === index ? (
+                        <TextField
+                          fullWidth
+                          multiline
+                          value={editingFileContent}
+                          onChange={(e) =>
+                            setEditingFileContent(e.target.value)
+                          }
+                        />
+                      ) : (
+                        <pre>{file.content}</pre>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {editingFileIndex === index ? (
+                        <IconButton
+                          edge="end"
+                          aria-label="save"
+                          onClick={() => handleSaveEdit(index)}
+                        >
+                          <SaveIcon />
+                        </IconButton>
+                      ) : (
+                        <>
+                          <IconButton
+                            edge="end"
+                            aria-label="edit"
+                            onClick={() => handleEditFile(index)}
+                          >
+                            <EditIcon />
+                          </IconButton>
+                          <IconButton
+                            edge="end"
+                            aria-label="delete"
+                            onClick={() => handleRemoveFile(index)}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+        <Snackbar
+          open={alertOpen}
+          autoHideDuration={6000}
+          onClose={handleAlertClose}
+        >
+          <Alert
+            onClose={handleAlertClose}
+            severity={alertMessage.includes("완료") ? "success" : "error"}
+            sx={{ width: "100%" }}
+          >
+            {alertMessage}
+          </Alert>
+        </Snackbar>
+      </Container>
+    </ThemeProvider>
   );
 };
 
